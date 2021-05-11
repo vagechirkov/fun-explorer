@@ -69,7 +69,7 @@ class Canvas(QtWidgets.QLabel):
 
     def __init__(self):
         super().__init__()
-        self.pixmap_size = (500, 500)
+        self.pixmap_size = (650, 650)
         pixmap = QtGui.QPixmap(*self.pixmap_size)
         self.setPixmap(pixmap)
         self.last_x, self.last_y = None, None
@@ -108,7 +108,7 @@ class Canvas(QtWidgets.QLabel):
 
         painter = QtGui.QPainter(self.pixmap())
         p = painter.pen()
-        p.setWidth(6)
+        p.setWidth(2)
         p.setColor(self.pen_color)
         painter.setPen(p)
         painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
@@ -127,7 +127,7 @@ class Canvas(QtWidgets.QLabel):
     def update_transformed_space(self, e):
         painter = QtGui.QPainter(self.transformed_space.pixmap())
         p = painter.pen()
-        p.setWidth(6)
+        p.setWidth(2)
         p.setColor(self.pen_color)
         painter.setPen(p)
 
@@ -143,14 +143,18 @@ class Canvas(QtWidgets.QLabel):
         self.transformed_space.update()
 
     def pixel_to_data(self, x, y, pixmap_size):
-        scale_x = pixmap_size[0] / 2
-        scale_y = pixmap_size[1] / 2
-        return (x - scale_x)/scale_x, (y - scale_y)/scale_y
+        mean_x = pixmap_size[0] / 2
+        mean_y = pixmap_size[1] / 2
+        std_x = pixmap_size[0] / 2
+        std_y = pixmap_size[1] / 2
+        return (x - mean_x)/std_x, (y - mean_y)/std_y
 
     def data_to_pixel(self, x, y, pixmap_size):
-        scale_x = pixmap_size[0] / 2
-        scale_y = pixmap_size[1] / 2
-        x, y = x*scale_x + scale_x, y*scale_y + scale_y
+        mean_x = pixmap_size[0] / 2
+        mean_y = pixmap_size[1] / 2
+        std_x = pixmap_size[0] / 2
+        std_y = pixmap_size[1] / 2
+        x, y = x*std_x + mean_x, y*std_y + mean_y
         return np.int32(x), np.int32(y)
 
     def coord_transform(self, x, y, inverse=False):
