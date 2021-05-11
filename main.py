@@ -6,20 +6,18 @@ Inspiration from https://github.com/stephencwelch/Imaginary-Numbers-Are-Real
 import sys
 
 import numpy as np
-from sklearn.decomposition import PCA, KernelPCA
+from sklearn.decomposition import KernelPCA
 from sklearn.datasets import make_circles
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtCore import Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
 
+COLORS = [
+            '#000000', '#141923', '#414168', '#3a7fa7', '#35e3e3', '#8fd970',
+            '#5ebb49', '#458352', '#dcd37b', '#fffee5', '#ffd035', '#cc9245',
+            '#a15c3e', '#a42f3b', '#f45b7a', '#c24998', '#81588d', '#bcb0c2',
+            '#ffffff',
+         ]
 
-X, y = make_circles(n_samples=400, factor=.3, noise=0.05, random_state=0)
-X -= X.mean(axis=0)
-X /= X.std(axis=0)*5
-
-kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10,
-                 n_components=2)
-kpca = kpca.fit(X)
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -71,7 +69,7 @@ class Canvas(QtWidgets.QLabel):
 
     def __init__(self):
         super().__init__()
-        self.pixmap_size = (600, 600)
+        self.pixmap_size = (500, 500)
         pixmap = QtGui.QPixmap(*self.pixmap_size)
         self.setPixmap(pixmap)
         self.last_x, self.last_y = None, None
@@ -116,8 +114,7 @@ class Canvas(QtWidgets.QLabel):
         painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
         painter.end()
         self.update()
-
-        self.upadate_transformed_space(e)
+        self.update_transformed_space(e)
 
         # Update the origin for next time.
         self.last_x = e.x()
@@ -127,7 +124,7 @@ class Canvas(QtWidgets.QLabel):
         self.last_x = None
         self.last_y = None
 
-    def upadate_transformed_space(self, e):
+    def update_transformed_space(self, e):
         painter = QtGui.QPainter(self.transformed_space.pixmap())
         p = painter.pen()
         p.setWidth(6)
@@ -141,20 +138,19 @@ class Canvas(QtWidgets.QLabel):
             x, y = self.coord_transform(e.x(), e.y(), inverse=True)
             last_x, last_y = self.coord_transform(self.last_x, self.last_y,
                                                   inverse=True)
-
         painter.drawLine(last_x, last_y, x, y)
         painter.end()
         self.transformed_space.update()
 
     def pixel_to_data(self, x, y, pixmap_size):
-        size_x = pixmap_size[0]
-        size_y = pixmap_size[1]
-        return x/size_x - 0.5, x/size_y - 0.5
+        scale_x = pixmap_size[0] / 2
+        scale_y = pixmap_size[1] / 2
+        return (x - scale_x)/scale_x, (y - scale_y)/scale_y
 
     def data_to_pixel(self, x, y, pixmap_size):
-        size_x = pixmap_size[0]
-        size_y = pixmap_size[1]
-        x, y = (x+0.5)*size_x, (y+0.5)*size_y
+        scale_x = pixmap_size[0] / 2
+        scale_y = pixmap_size[1] / 2
+        x, y = x*scale_x + scale_x, y*scale_y + scale_y
         return np.int32(x), np.int32(y)
 
     def coord_transform(self, x, y, inverse=False):
@@ -165,16 +161,6 @@ class Canvas(QtWidgets.QLabel):
             x, y = kpca.transform([[x, y]])[0]
         x, y = self.data_to_pixel(x, y, self.transformed_space.pixmap_size)
         return x, y
-
-
-
-COLORS = [
-            # 17 undertones https://lospec.com/palette-list/17undertones
-            '#000000', '#141923', '#414168', '#3a7fa7', '#35e3e3', '#8fd970',
-            '#5ebb49', '#458352', '#dcd37b', '#fffee5', '#ffd035', '#cc9245',
-            '#a15c3e', '#a42f3b', '#f45b7a', '#c24998', '#81588d', '#bcb0c2',
-            '#ffffff',
-         ]
 
 
 class QPaletteButton(QtWidgets.QPushButton):
@@ -195,6 +181,15 @@ def main():
     window = MainWindow()
     window.show()
     app.exec_()
+
+
+X, y = make_circles(n_samples=400, factor=.3, noise=0.05, random_state=0)
+# X -= X.mean(axis=0)
+# X /= X.std(axis=0)*5
+
+kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10,
+                 n_components=2)
+kpca = kpca.fit(X)
 
 
 if __name__ == '__main__':
