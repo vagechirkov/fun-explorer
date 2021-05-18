@@ -188,8 +188,6 @@ def main():
 
 
 X, y = make_circles(n_samples=400, factor=.3, noise=0.05, random_state=0)
-# X -= X.mean(axis=0)
-# X /= X.std(axis=0)*5
 
 kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10,
                  n_components=2)
